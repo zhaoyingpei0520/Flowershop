@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zhaoyingpei - 鲜花库存管理</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { 
+    font-family: -apple-system, sans-serif; 
+    background: #F9FAFB; 
+    padding-bottom: 80px;
+}
+.header { 
+    background: linear-gradient(135deg, #6B7280, #4B5563); 
+    padding: 20px; 
+    color: white; 
+}
+.header-title { font-size: 24px; font-weight: 700; margin-bottom: 5px; }
+.header-subtitle { font-size: 13px; opacity: 0.9; }
+.stats { 
+    padding: 20px; 
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 15px; 
+}
+.stat-card { 
+    background: white; 
+    border-radius: 12px; 
+    padding: 20px; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+}
+.stat-icon { font-size: 28px; margin-bottom: 8px; }
+.stat-value { font-size: 24px; font-weight: 700; }
+.stat-label { font-size: 12px; color: #6B7280; margin-top: 4px; }
+.section { padding: 0 20px 20px; }
+.section-title { 
+    font-size: 16px; 
+    font-weight: 600; 
+    margin-bottom: 15px; 
+}
+.action-grid { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 12px; 
+    margin-bottom: 20px;
+}
+.action-btn { 
+    background: white; 
+    border: 2px solid #E5E7EB; 
+    border-radius: 12px; 
+    padding: 20px 10px; 
+    text-align: center; 
+    cursor: pointer; 
+}
+.action-btn.primary { 
+    background: linear-gradient(135deg, #6B7280, #4B5563); 
+    border-color: #6B7280; 
+    color: white; 
+}
+.action-icon { font-size: 24px; margin-bottom: 8px; }
+.action-label { font-size: 12px; font-weight: 500; }
+.search-bar { 
+    background: white; 
+    border: 2px solid #E5E7EB; 
+    border-radius: 12px; 
+    padding: 12px 16px; 
+    display: flex; 
+    gap: 10px; 
+    margin-bottom: 20px;
+}
+.search-input { 
+    border: none; 
+    outline: none; 
+    flex: 1; 
+    font-size: 14px; 
+}
+.inventory-list { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 12px; 
+}
+.inventory-item { 
+    background: white; 
+    border-radius: 12px; 
+    padding: 16px; 
+    display: flex; 
+    gap: 15px; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+}
+.item-image { 
+    width: 60px; 
+    height: 60px; 
+    border-radius: 10px; 
+    background: linear-gradient(135deg, #9CA3AF, #6B7280); 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    font-size: 28px; 
+    flex-shrink: 0; 
+}
+.item-info { flex: 1; }
+.item-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.item-details { font-size: 12px; color: #6B7280; margin-bottom: 6px; }
+.item-stock { display: flex; align-items: center; gap: 8px; }
+.stock-badge { 
+    padding: 3px 8px; 
+    border-radius: 6px; 
+    font-size: 11px; 
+    font-weight: 600; 
+}
+.stock-badge.high { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+.stock-badge.medium { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+.stock-badge.low { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
+.item-quantity { font-size: 12px; color: #6B7280; }
+.item-actions { display: flex; gap: 8px; }
+.btn-icon { 
+    width: 32px; 
+    height: 32px; 
+    border-radius: 8px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    cursor: pointer; 
+    font-size: 16px; 
+}
+.btn-icon.edit { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+.btn-icon.delete { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
+.modal { 
+    display: none; 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    right: 0; 
+    bottom: 0; 
+    background: rgba(0, 0, 0, 0.5); 
+    z-index: 1000; 
+    align-items: center; 
+    justify-content: center; 
+}
+.modal.active { display: flex; }
+.modal-content { 
+    background: white; 
+    border-radius: 16px; 
+    padding: 24px; 
+    max-width: 90%; 
+    width: 400px; 
+    max-height: 90vh; 
+    overflow-y: auto; 
+}
+.modal-header { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+.form-group { margin-bottom: 16px; }
+.form-label { 
+    display: block; 
+    font-size: 13px; 
+    font-weight: 500; 
+    margin-bottom: 8px; 
+}
+.form-input, .form-select { 
+    width: 100%; 
+    padding: 10px 12px; 
+    border: 2px solid #E5E7EB; 
+    border-radius: 8px; 
+    font-size: 14px; 
+}
+.form-input:focus, .form-select:focus { 
+    outline: none; 
+    border-color: #6B7280; 
+}
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+.btn { 
+    flex: 1; 
+    padding: 10px 20px; 
+    border: none; 
+    border-radius: 8px; 
+    font-size: 14px; 
+    font-weight: 600; 
+    cursor: pointer; 
+}
+.btn-primary { background: #6B7280; color: white; }
+.btn-secondary { background: #F3F4F6; color: #1F2937; }
+.btn-success { background: #10B981; color: white; }
+.empty-state { 
+    text-align: center; 
+    padding: 40px 20px; 
+    color: #6B7280; 
+}
+.empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+.bottom-nav { 
+    position: fixed; 
+    bottom: 0; 
+    left: 0; 
+    right: 0; 
+    background: white; 
+    border-top: 1px solid #E5E7EB; 
+    padding: 10px 0; 
+    display: flex; 
+    justify-content: space-around; 
+}
+.nav-item { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    gap: 4px; 
+    cursor: pointer; 
+    padding: 4px 16px; 
+    border-radius: 10px; 
+}
+.nav-item.active { 
+    color: #4B5563; 
+    background: rgba(107, 114, 128, 0.1); 
+}
+.nav-icon { font-size: 22px; }
+.nav-label { font-size: 11px; font-weight: 500; }
+.fab { 
+    position: fixed; 
+    bottom: 90px; 
+    right: 20px; 
+    width: 56px; 
+    height: 56px; 
+    border-radius: 50%; 
+    background: linear-gradient(135deg, #6B7280, #4B5563); 
+    color: white; 
+    font-size: 24px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2); 
+    cursor: pointer; 
+}
+.toast { 
+    position: fixed; 
+    bottom: 100px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    background: #1F2937; 
+    color: white; 
+    padding: 12px 24px; 
+    border-radius: 10px; 
+    font-size: 14px; 
+    z-index: 2000; 
+    display: none; 
+}
+.toast.show { display: block; }
+.camera-container { 
+    width: 100%; 
+    aspect-ratio: 4/3; 
+    background: #000; 
+    border-radius: 12px; 
+    overflow: hidden; 
+    margin: 16px 0; 
+}
+#cameraVideo, #cameraCanvas { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+}
+#cameraCanvas { display: none; }
+.camera-controls { display: flex; gap: 10px; margin-top: 12px; }
+.recognition-result { 
+    display: none; 
+    padding: 12px; 
+    background: #F3F4F6; 
+    border-radius: 10px; 
+    margin-top: 12px; 
+    font-size: 13px; 
+}
+</style>
+</head>
+<body>
+<div class="header">
+<div class="header-title">Zhaoyingpei</div>
+<div class="header-subtitle">鲜花库存管理系统 v2.0</div>
+</div>
+
+<div class="stats">
+<div class="stat-card">
+<div class="stat-icon">🌸</div>
+<div class="stat-value" id="totalTypes">0</div>
+<div class="stat-label">总库存品类</div>
+</div>
+<div class="stat-card">
+<div class="stat-icon">📦</div>
+<div class="stat-value" id="totalQuantity">0</div>
+<div class="stat-label">总数量（支）</div>
+</div>
+<div class="stat-card">
+<div class="stat-icon">⚠️</div>
+<div class="stat-value" id="lowStock">0</div>
+<div class="stat-label">低库存预警</div>
+</div>
+<div class="stat-card">
+<div class="stat-icon">✅</div>
+<div class="stat-value" id="highStock">0</div>
+<div class="stat-label">库存充足</div>
+</div>
+</div>
+
+<div class="section">
+<div class="section-title">⚡ 快捷操作</div>
+<div class="action-grid">
+<div class="action-btn primary" onclick="openAddModal()">
+<div class="action-icon">➕</div>
+<div class="action-label">添加进货</div>
+</div>
+<div class="action-btn" onclick="openCameraModal()">
+<div class="action-icon">📷</div>
+<div class="action-label">拍照识别</div>
+</div>
+<div class="action-btn" onclick="exportData()">
+<div class="action-icon">📤</div>
+<div class="action-label">导出数据</div>
+</div>
+</div>
+
+<div class="search-bar">
+<span>🔍</span>
+<input type="text" class="search-input" id="searchInput" placeholder="搜索鲜花名称、品种...">
+</div>
+
+<div class="section-title">📋 库存列表</div>
+<div id="inventoryList" class="inventory-list"></div>
+<div id="emptyState" class="empty-state" style="display: none;">
+<div class="empty-icon">🌺</div>
+<div>暂无库存数据</div>
+<div style="margin-top: 8px; font-size: 12px;">点击上方"添加进货"开始管理</div>
+</div>
+</div>
+
+<div id="addModal" class="modal">
+<div class="modal-content">
+<div class="modal-header" id="modalTitle">添加鲜花</div>
+<form id="flowerForm" onsubmit="saveFlower(event)">
+<div class="form-group">
+<label class="form-label">鲜花名称 *</label>
+<input type="text" class="form-input" id="flowerName" required>
+</div>
+<div class="form-group">
+<label class="form-label">品种</label>
+<input type="text" class="form-input" id="flowerVariety" value="标准">
+</div>
+<div class="form-group">
+<label class="form-label">等级</label>
+<select class="form-select" id="flowerGrade">
+<option value="特级">特级</option>
+<option value="A级" selected>A级</option>
+<option value="B级">B级</option>
+<option value="C级">C级</option>
+</select>
+</div>
+<div class="form-group">
+<label class="form-label">数量（支）*</label>
+<input type="number" class="form-input" id="flowerQuantity" min="0" value="100" required>
+</div>
+<div class="form-group">
+<label class="form-label">图标</label>
+<select class="form-select" id="flowerIcon">
+<option value="🌹">🌹 玫瑰</option>
+<option value="🌷">🌷 郁金香</option>
+<option value="🌻">🌻 向日葵</option>
+<option value="🌺">🌺 木槿</option>
+<option value="🌸">🌸 樱花</option>
+<option value="💐">💐 花束</option>
+<option value="🏵️">🏵️ 装饰花</option>
+<option value="🌼">🌼 雏菊</option>
+</select>
+</div>
+<div class="modal-actions">
+<button type="button" class="btn btn-secondary" onclick="closeAddModal()">取消</button>
+<button type="submit" class="btn btn-success">保存</button>
+</div>
+</form>
+</div>
+</div>
+
+<div id="cameraModal" class="modal">
+<div class="modal-content">
+<div class="modal-header">📷 拍照识别鲜花</div>
+<div class="camera-container">
+<video id="cameraVideo" autoplay playsinline></video>
+<canvas id="cameraCanvas"></canvas>
+</div>
+<div class="camera-controls">
+<button class="btn btn-primary" onclick="capturePhoto()">📸 拍照</button>
+<button class="btn btn-secondary" onclick="retakePhoto()">🔄 重拍</button>
+</div>
+<div id="recognitionResult" class="recognition-result">
+<div style="font-weight: 600; margin-bottom: 8px;">识别结果：</div>
+<div id="recognitionText"></div>
+</div>
+<div class="modal-actions">
+<button class="btn btn-secondary" onclick="closeCameraModal()">关闭</button>
+<button class="btn btn-success" id="useRecognitionBtn" style="display: none;" onclick="useRecognitionResult()">使用结果</button>
+</div>
+</div>
+</div>
+
+<div class="fab" onclick="openAddModal()">➕</div>
+
+<div class="bottom-nav">
+<div class="nav-item active">
+<div class="nav-icon">🏠</div>
+<div class="nav-label">首页</div>
+</div>
+<div class="nav-item">
+<div class="nav-icon">📈</div>
+<div class="nav-label">趋势</div>
+</div>
+<div class="nav-item">
+<div class="nav-icon">🔔</div>
+<div class="nav-label">提醒</div>
+</div>
+<div class="nav-item">
+<div class="nav-icon">👤</div>
+<div class="nav-label">我的</div>
+</div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+let inventory = [];
+let currentEditId = null;
+let cameraStream = null;
+let recognizedFlower = null;
+
+window.addEventListener('DOMContentLoaded', function() {
+    loadData();
+    renderInventory();
+    updateStats();
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        renderInventory(e.target.value);
+    });
+});
+
+function loadData() {
+    const saved = localStorage.getItem('flowerInventory');
+    if (saved) inventory = JSON.parse(saved);
+}
+
+function saveData() {
+    localStorage.setItem('flowerInventory', JSON.stringify(inventory));
+}
+
+function renderInventory(filter = '') {
+    const listContainer = document.getElementById('inventoryList');
+    const emptyState = document.getElementById('emptyState');
+    
+    let filteredInventory = inventory;
+    if (filter) {
+        filteredInventory = inventory.filter(item => 
+            item.name.toLowerCase().includes(filter.toLowerCase()) ||
+            item.variety.toLowerCase().includes(filter.toLowerCase())
+        );
+    }
+
+    if (filteredInventory.length === 0) {
+        listContainer.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+    }
+
+    listContainer.style.display = 'flex';
+    emptyState.style.display = 'none';
+
+    listContainer.innerHTML = filteredInventory.map(item => {
+        const stockLevel = getStockLevel(item.quantity);
+        return `
+            <div class="inventory-item">
+                <div class="item-image">${item.icon}</div>
+                <div class="item-info">
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-details">品种：${item.variety} · 等级：${item.grade}</div>
+                    <div class="item-stock">
+                        <span class="stock-badge ${stockLevel.class}">${stockLevel.text}</span>
+                        <span class="item-quantity">${item.quantity}支</span>
+                    </div>
+                </div>
+                <div class="item-actions">
+                    <div class="btn-icon edit" onclick="editItem(${item.id})">✏️</div>
+                    <div class="btn-icon delete" onclick="deleteItem(${item.id})">🗑️</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getStockLevel(quantity) {
+    if (quantity >= 100) return { class: 'high', text: '库存充足' };
+    if (quantity >= 50) return { class: 'medium', text: '库存适中' };
+    return { class: 'low', text: '库存偏低' };
+}
+
+function updateStats() {
+    document.getElementById('totalTypes').textContent = inventory.length;
+    const totalQty = inventory.reduce((sum, item) => sum + item.quantity, 0);
+    document.getElementById('totalQuantity').textContent = totalQty.toLocaleString();
+    document.getElementById('lowStock').textContent = inventory.filter(item => item.quantity < 50).length;
+    document.getElementById('highStock').textContent = inventory.filter(item => item.quantity >= 100).length;
+}
+
+function openAddModal() {
+    currentEditId = null;
+    document.getElementById('modalTitle').textContent = '添加鲜花';
+    document.getElementById('flowerForm').reset();
+    document.getElementById('flowerVariety').value = '标准';
+    document.getElementById('flowerQuantity').value = '100';
+    document.getElementById('addModal').classList.add('active');
+}
+
+function closeAddModal() {
+    document.getElementById('addModal').classList.remove('active');
+    currentEditId = null;
+}
+
+function saveFlower(event) {
+    event.preventDefault();
+    
+    const name = document.getElementById('flowerName').value;
+    const variety = document.getElementById('flowerVariety').value;
+    const grade = document.getElementById('flowerGrade').value;
+    const quantity = parseInt(document.getElementById('flowerQuantity').value);
+    const icon = document.getElementById('flowerIcon').value;
+
+    if (currentEditId !== null) {
+        const index = inventory.findIndex(item => item.id === currentEditId);
+        if (index !== -1) {
+            inventory[index] = { ...inventory[index], name, variety, grade, quantity, icon };
+            showToast('更新成功！');
+        }
+    } else {
+        const newItem = {
+            id: Date.now(),
+            name, variety, grade, quantity, icon,
+            createdAt: new Date().toISOString()
+        };
+        inventory.unshift(newItem);
+        showToast('添加成功！');
+    }
+
+    saveData();
+    renderInventory();
+    updateStats();
+    closeAddModal();
+}
+
+function editItem(id) {
+    const item = inventory.find(i => i.id === id);
+    if (!item) return;
+
+    currentEditId = id;
+    document.getElementById('modalTitle').textContent = '编辑鲜花';
+    document.getElementById('flowerName').value = item.name;
+    document.getElementById('flowerVariety').value = item.variety;
+    document.getElementById('flowerGrade').value = item.grade;
+    document.getElementById('flowerQuantity').value = item.quantity;
+    document.getElementById('flowerIcon').value = item.icon;
+    document.getElementById('addModal').classList.add('active');
+}
+
+function deleteItem(id) {
+    if (confirm('确定要删除这个鲜花吗？')) {
+        inventory = inventory.filter(item => item.id !== id);
+        saveData();
+        renderInventory();
+        updateStats();
+        showToast('删除成功！');
+    }
+}
+
+async function openCameraModal() {
+    document.getElementById('cameraModal').classList.add('active');
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'environment' } 
+        });
+        document.getElementById('cameraVideo').srcObject = cameraStream;
+        document.getElementById('cameraVideo').style.display = 'block';
+        document.getElementById('cameraCanvas').style.display = 'none';
+        document.getElementById('recognitionResult').style.display = 'none';
+        document.getElementById('useRecognitionBtn').style.display = 'none';
+    } catch (error) {
+        showToast('无法访问相机');
+    }
+}
+
+function closeCameraModal() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    document.getElementById('cameraModal').classList.remove('active');
+}
+
+function capturePhoto() {
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    const context = canvas.getContext('2d');
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0);
+
+    video.style.display = 'none';
+    canvas.style.display = 'block';
+
+    recognizeFlower();
+}
+
+function retakePhoto() {
+    document.getElementById('cameraVideo').style.display = 'block';
+    document.getElementById('cameraCanvas').style.display = 'none';
+    document.getElementById('recognitionResult').style.display = 'none';
+    document.getElementById('useRecognitionBtn').style.display = 'none';
+}
+
+function recognizeFlower() {
+    const flowers = [
+        { name: '红玫瑰', variety: '卡罗拉', icon: '🌹' },
+        { name: '郁金香', variety: '荷兰进口', icon: '🌷' },
+        { name: '向日葵', variety: '金色阳光', icon: '🌻' },
+        { name: '木槿花', variety: '热带品种', icon: '🌺' }
+    ];
+
+    setTimeout(() => {
+        recognizedFlower = flowers[Math.floor(Math.random() * flowers.length)];
+        document.getElementById('recognitionText').innerHTML = `
+            <strong>识别为：${recognizedFlower.name}</strong><br>
+            品种：${recognizedFlower.variety}<br>
+            <small style="color: #F59E0B;">⚠️ 模拟识别结果</small>
+        `;
+        document.getElementById('recognitionResult').style.display = 'block';
+        document.getElementById('useRecognitionBtn').style.display = 'block';
+    }, 1000);
+}
+
+function useRecognitionResult() {
+    if (recognizedFlower) {
+        closeCameraModal();
+        openAddModal();
+        document.getElementById('flowerName').value = recognizedFlower.name;
+        document.getElementById('flowerVariety').value = recognizedFlower.variety;
+        document.getElementById('flowerIcon').value = recognizedFlower.icon;
+    }
+}
+
+function exportData() {
+    const dataStr = JSON.stringify(inventory, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `鲜花库存_${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    showToast('数据导出成功！');
+}
+
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+}
+</script>
+</body>
+</html>
